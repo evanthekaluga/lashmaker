@@ -1,14 +1,47 @@
 version: '3.8'
 
 services:
+  # PostgreSQL база данных
+  db:
+    image: postgres:15-alpine
+    container_name: lash-master-db
+    environment:
+      POSTGRES_DB: lashmaster
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - web-network
+    restart: unless-stopped
+
+  # Flask бэкенд с админ-панелью
+  backend:
+    build: ./backend
+    container_name: lash-master-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/lashmaster
+      SECRET_KEY: your-secret-key-change-in-production
+    depends_on:
+      - db
+    networks:
+      - web-network
+    restart: unless-stopped
+
+  # Nginx фронтенд + прокси для бэкенда
   lash-master-site:
     build: .
     container_name: lash-master-website
     ports:
       - "80:80"
-    restart: unless-stopped
+    depends_on:
+      - backend
     networks:
       - web-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
 
 networks:
   web-network:

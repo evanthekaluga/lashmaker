@@ -114,3 +114,122 @@ document.querySelectorAll('.service-card, .portfolio-item, .review-card').forEac
 });
 
 console.log('Сайт мастера по наращиванию ресниц загружен успешно!');
+
+// Public Calendar Functions
+let publicCurrentDate = new Date();
+let publicScheduleData = {};
+
+const timeSlots = [
+    '09:00', '10:00', '11:00', '12:00', '13:00', '14:00',
+    '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+];
+
+function changePublicMonth(delta) {
+    publicCurrentDate.setMonth(publicCurrentDate.getMonth() + delta);
+    renderPublicCalendar();
+    loadPublicSchedule();
+}
+
+function renderPublicCalendar() {
+    const year = publicCurrentDate.getFullYear();
+    const month = publicCurrentDate.getMonth();
+    
+    const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+    document.getElementById('publicCurrentMonth').textContent = `${monthNames[month]} ${year}`;
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = (firstDay.getDay() + 6) % 7; // Понедельник = 0
+    const totalDays = lastDay.getDate();
+
+    const calendarDays = document.getElementById('publicCalendarDays');
+    calendarDays.innerHTML = '';
+
+    // Пустые ячейки до первого дня месяца
+    for (let i = 0; i < startDay; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'public-day-cell empty';
+        calendarDays.appendChild(emptyCell);
+    }
+
+    // Дни месяца
+    const today = new Date();
+    for (let day = 1; day <= totalDays; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'public-day-cell';
+        
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        if (dateStr === today.toISOString().split('T')[0]) {
+            cell.classList.add('today');
+        }
+
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.textContent = day;
+        cell.appendChild(dayNumber);
+
+        // Проверяем занятость на этот день
+        if (publicScheduleData[dateStr]) {
+            const dayApps = publicScheduleData[dateStr];
+            const busyCount = dayApps.filter(a => a.is_busy).length;
+            const freeCount = timeSlots.length - busyCount;
+            
+            if (busyCount > 0) {
+                cell.classList.add('all-busy');
+            }
+            if (freeCount > 0) {
+                cell.classList.add('has-free');
+            }
+
+            // Показываем статусы времени
+            const shownTimes = dayApps.slice(0, 3);
+            shownTimes.forEach(app => {
+                const badge = document.createElement('span');
+                badge.className = `status-badge ${app.is_busy ? 'busy' : 'free'}`;
+                badge.textContent = `${app.time} ${app.is_busy ? 'Занято' : 'Свободно'}`;
+                cell.appendChild(badge);
+            });
+
+            if (dayApps.length > 3) {
+                const more = document.createElement('span');
+                more.className = 'status-badge';
+                more.style.background = '#e5e7eb';
+                more.style.color = '#374151';
+                more.textContent = `+${dayApps.length - 3} еще`;
+                cell.appendChild(more);
+            }
+        } else {
+            // День полностью свободен
+            cell.classList.add('has-free');
+            const badge = document.createElement('span');
+            badge.className = 'status-badge free';
+            badge.textContent = 'Свободно';
+            cell.appendChild(badge);
+        }
+
+        calendarDays.appendChild(cell);
+    }
+}
+
+async function loadPublicSchedule() {
+    const year = publicCurrentDate.getFullYear();
+    const month = publicCurrentDate.getMonth() + 1;
+    
+    try {
+        const response = await fetch(`/api/schedule/${year}/${month}`);
+        if (response.ok) {
+            publicScheduleData = await response.json();
+            renderPublicCalendar();
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки расписания:', error);
+    }
+}
+
+// Инициализация публичного календаря
+if (document.getElementById('publicCalendar')) {
+    renderPublicCalendar();
+    loadPublicSchedule();
+}
