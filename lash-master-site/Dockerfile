@@ -9,7 +9,7 @@ COPY js/ /usr/share/nginx/html/js/
 
 # Создаем директорию для изображений и копируем файлы, если они есть
 RUN mkdir -p /usr/share/nginx/html/images
-COPY images/ /usr/share/nginx/html/images/ || true
+COPY images/ /usr/share/nginx/html/images/
 
 # Копируем конфигурацию nginx с прокси для бэкенда
 COPY nginx.conf /etc/nginx/conf.d/default.conf
