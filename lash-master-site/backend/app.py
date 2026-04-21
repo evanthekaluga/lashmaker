@@ -187,14 +187,14 @@ def manage_clients():
 def init_db():
     db.create_all()
     # Создаем администратора по умолчанию
-    if not User.query.filter_by(username='admin').first():
+    if not User.query.filter_by(username='master').first():
         admin = User(
-            username='admin',
-            password_hash=generate_password_hash('admin123')
+            username='master',
+            password_hash=generate_password_hash('Master123')
         )
         db.session.add(admin)
         db.session.commit()
-        return 'База данных инициализирована. Логин: admin, Пароль: admin123'
+        return 'База данных инициализирована. Логин: master, Пароль: Master123'
     return 'База данных уже инициализирована'
 
 if __name__ == '__main__':
