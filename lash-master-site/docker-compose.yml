@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  lash-master-site:
+    build: .
+    container_name: lash-master-website
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - web-network
+
+networks:
+  web-network:
+    driver: bridge
