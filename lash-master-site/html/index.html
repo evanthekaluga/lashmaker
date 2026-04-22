@@ -201,8 +201,43 @@
         <div class="container">
             <p>&copy; 2024 Елена Красавина. Мастер по наращиванию ресниц.</p>
             <p>Все права защищены.</p>
+            <div style="margin-top: 15px;">
+                <a href="/admin/login" style="color: #d8a7b8; text-decoration: none; font-size: 14px;">Вход для мастера</a>
+            </div>
         </div>
     </footer>
+
+    <!-- Расписание секция -->
+    <section id="schedule-public" class="schedule-public">
+        <div class="container">
+            <h2>Расписание на месяц</h2>
+            <p class="schedule-subtitle">Проверьте свободные даты для записи</p>
+            <div class="calendar-legend">
+                <span class="legend-item"><span class="legend-color free"></span> Свободно</span>
+                <span class="legend-item"><span class="legend-color busy"></span> Занято</span>
+            </div>
+            <div class="calendar-container" id="publicCalendar">
+                <div class="calendar-header-nav">
+                    <button onclick="changePublicMonth(-1)">← Предыдущий</button>
+                    <h3 id="publicCurrentMonth"></h3>
+                    <button onclick="changePublicMonth(1)">Следующий →</button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-header">Пн</div>
+                    <div class="calendar-header">Вт</div>
+                    <div class="calendar-header">Ср</div>
+                    <div class="calendar-header">Чт</div>
+                    <div class="calendar-header">Пт</div>
+                    <div class="calendar-header">Сб</div>
+                    <div class="calendar-header">Вс</div>
+                </div>
+                <div class="calendar-grid" id="publicCalendarDays"></div>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <a href="#contact" class="btn-primary">Записаться на свободное время</a>
+            </div>
+        </div>
+    </section>
 
     <script src="js/script.js"></script>
 </body>
