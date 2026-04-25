@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление клиентами</title>
+    <title>Статистика</title>
     <style>
         * {
             margin: 0;
@@ -38,9 +38,45 @@
             background: #fce7f3;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 40px auto;
             padding: 0 20px;
+        }
+        .page-title {
+            color: #db2777;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #db2777;
+            margin-bottom: 10px;
+        }
+        .stat-label {
+            color: #6b7280;
+            font-size: 1.1em;
         }
         .card {
             background: white;
@@ -52,82 +88,83 @@
         .card h2 {
             color: #db2777;
             margin-bottom: 20px;
+            font-size: 1.5em;
         }
-        .form-group {
-            margin-bottom: 20px;
+        .services-list {
+            list-style: none;
         }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 2px solid #f3f4f6;
+        }
+        .service-item:last-child {
+            border-bottom: none;
+        }
+        .service-name {
             color: #374151;
             font-weight: 600;
         }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #f3f4f6;
-            border-radius: 8px;
-            font-size: 16px;
+        .service-count {
+            background: #fdf2f8;
+            color: #db2777;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
         }
-        .form-group input:focus {
-            outline: none;
-            border-color: #db2777;
+        .weekly-chart {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 200px;
+            padding: 20px 0;
         }
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
+        .day-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
         }
-        .btn-primary {
-            background: #db2777;
-            color: white;
+        .bar {
+            width: 40px;
+            background: linear-gradient(to top, #db2777, #f472b6);
+            border-radius: 8px 8px 0 0;
+            transition: height 0.5s;
         }
-        .btn-primary:hover {
-            background: #be185d;
+        .day-label {
+            color: #6b7280;
+            font-size: 0.9em;
         }
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-        .clients-table {
+        .recent-clients-table {
             width: 100%;
             border-collapse: collapse;
         }
-        .clients-table th,
-        .clients-table td {
+        .recent-clients-table th,
+        .recent-clients-table td {
             padding: 15px;
             text-align: left;
             border-bottom: 2px solid #f3f4f6;
         }
-        .clients-table th {
+        .recent-clients-table th {
             background: #fdf2f8;
             color: #db2777;
             font-weight: 600;
         }
-        .clients-table tr:hover {
+        .recent-clients-table tr:hover {
             background: #fdf2f8;
         }
-        .delete-btn {
-            background: #fee2e2;
-            color: #dc2626;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .delete-btn:hover {
-            background: #dc2626;
-            color: white;
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>👥 Клиенты</h1>
+        <h1>📊 Статистика</h1>
         <div class="header-nav">
             <a href="{{ url_for('admin') }}">📅 Расписание</a>
             <a href="{{ url_for('logout') }}">🚪 Выход</a>
@@ -135,105 +172,94 @@
     </div>
 
     <div class="container">
-        <div class="card">
-            <h2>Добавить клиента</h2>
-            <form id="addClientForm">
-                <div class="form-group">
-                    <label>Имя</label>
-                    <input type="text" id="clientName" required>
-                </div>
-                <div class="form-group">
-                    <label>Телефон</label>
-                    <input type="tel" id="clientPhone" required>
-                </div>
-                <div class="form-group">
-                    <label>Email (необязательно)</label>
-                    <input type="email" id="clientEmail">
-                </div>
-                <button type="submit" class="btn btn-primary">Добавить</button>
-            </form>
+        <h1 class="page-title">Обзор статистики</h1>
+
+        <!-- Основные показатели -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value">{{ total_clients }}</div>
+                <div class="stat-label">Всего клиентов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-value">{{ total_appointments }}</div>
+                <div class="stat-label">Всего записей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-value">{{ appointments_this_month }}</div>
+                <div class="stat-label">Записей в этом месяце</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-value">{{ today_appointments }}</div>
+                <div class="stat-label">Записей сегодня</div>
+            </div>
         </div>
 
+        <!-- Популярные услуги -->
         <div class="card">
-            <h2>Список клиентов</h2>
-            <table class="clients-table">
+            <h2>🔥 Популярные услуги</h2>
+            {% if services_stats %}
+            <ul class="services-list">
+                {% for service in services_stats %}
+                <li class="service-item">
+                    <span class="service-name">{{ service.service or 'Не указана' }}</span>
+                    <span class="service-count">{{ service.count }} записей</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="empty-state">Нет данных о записях</div>
+            {% endif %}
+        </div>
+
+        <!-- Статистика по неделе -->
+        <div class="card">
+            <h2>📈 Активность за неделю</h2>
+            {% if weekly_stats %}
+            <div class="weekly-chart">
+                {% set days = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] %}
+                {% for stat in weekly_stats %}
+                <div class="day-bar">
+                    <div class="bar" style="height: {{ (stat.count / (weekly_stats | map(attribute='count') | max)) * 150 }}px;"></div>
+                    <span class="day-label">{{ days[stat.day|int - 1] if stat.day|int > 0 else 'Вс' }}</span>
+                    <span class="stat-value" style="font-size: 1em;">{{ stat.count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">Нет данных за текущую неделю</div>
+            {% endif %}
+        </div>
+
+        <!-- Последние клиенты -->
+        <div class="card">
+            <h2>🆕 Последние клиенты</h2>
+            {% if recent_clients %}
+            <table class="recent-clients-table">
                 <thead>
                     <tr>
                         <th>Имя</th>
                         <th>Телефон</th>
                         <th>Email</th>
-                        <th>Действия</th>
                     </tr>
                 </thead>
-                <tbody id="clientsTableBody">
-                    {% for client in clients %}
+                <tbody>
+                    {% for client in recent_clients %}
                     <tr>
                         <td>{{ client.name }}</td>
                         <td>{{ client.phone }}</td>
                         <td>{{ client.email or '-' }}</td>
-                        <td>
-                            <button class="delete-btn" onclick="deleteClient({{ client.id }})">Удалить</button>
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <div class="empty-state">Клиенты ещё не добавлены</div>
+            {% endif %}
         </div>
     </div>
-
-    <script>
-        document.getElementById('addClientForm').onsubmit = async (e) => {
-            e.preventDefault();
-            
-            const data = {
-                action: 'add',
-                name: document.getElementById('clientName').value,
-                phone: document.getElementById('clientPhone').value,
-                email: document.getElementById('clientEmail').value || null
-            };
-
-            try {
-                const response = await fetch('/admin/clients', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                if (response.ok) {
-                    alert('Клиент успешно добавлен!');
-                    location.reload();
-                } else {
-                    alert('Ошибка при добавлении клиента');
-                }
-            } catch (error) {
-                console.error('Ошибка:', error);
-                alert('Ошибка при добавлении клиента');
-            }
-        };
-
-        async function deleteClient(id) {
-            if (!confirm('Вы уверены, что хотите удалить этого клиента?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch('/admin/clients', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'delete', id: id })
-                });
-                
-                if (response.ok) {
-                    alert('Клиент успешно удален!');
-                    location.reload();
-                } else {
-                    alert('Ошибка при удалении клиента');
-                }
-            } catch (error) {
-                console.error('Ошибка:', error);
-                alert('Ошибка при удалении клиента');
-            }
-        }
-    </script>
 </body>
 </html>
