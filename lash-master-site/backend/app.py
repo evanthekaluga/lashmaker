@@ -159,29 +159,58 @@ def logout():
 def admin():
     return render_template('admin.html')
 
-@app.route('/admin/clients', methods=['GET', 'POST'])
+@app.route('/admin/clients')
 @login_required
 def manage_clients():
-    if request.method == 'POST':
-        data = request.json
-        if data.get('action') == 'add':
-            client = Client(
-                name=data['name'],
-                phone=data['phone'],
-                email=data.get('email')
-            )
-            db.session.add(client)
-            db.session.commit()
-            return jsonify({'success': True})
-        elif data.get('action') == 'delete':
-            client = Client.query.get(data['id'])
-            if client:
-                db.session.delete(client)
-                db.session.commit()
-                return jsonify({'success': True})
+    # Статистика по клиентам и записям
+    from sqlalchemy import func
     
-    clients = Client.query.all()
-    return render_template('clients.html', clients=clients)
+    # Общее количество клиентов
+    total_clients = Client.query.count()
+    
+    # Общее количество записей
+    total_appointments = Appointment.query.count()
+    
+    # Записи за текущий месяц
+    now = datetime.now()
+    first_day_of_month = now.replace(day=1)
+    appointments_this_month = Appointment.query.filter(
+        Appointment.date >= first_day_of_month.date()
+    ).count()
+    
+    # Записи за сегодня
+    today_appointments = Appointment.query.filter(
+        Appointment.date == now.date()
+    ).count()
+    
+    # Популярные услуги
+    services_stats = db.session.query(
+        Appointment.service, 
+        func.count(Appointment.id).label('count')
+    ).group_by(Appointment.service).order_by(func.count(Appointment.id).desc()).limit(5).all()
+    
+    # Записи по дням недели (для текущей недели)
+    start_of_week = now - timedelta(days=now.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    weekly_stats = db.session.query(
+        func.strftime('%w', Appointment.date).label('day'),
+        func.count(Appointment.id).label('count')
+    ).filter(
+        Appointment.date >= start_of_week.date(),
+        Appointment.date <= end_of_week.date()
+    ).group_by(func.strftime('%w', Appointment.date)).all()
+    
+    # Последние клиенты
+    recent_clients = Client.query.order_by(Client.id.desc()).limit(5).all()
+    
+    return render_template('clients.html', 
+                         total_clients=total_clients,
+                         total_appointments=total_appointments,
+                         appointments_this_month=appointments_this_month,
+                         today_appointments=today_appointments,
+                         services_stats=services_stats,
+                         weekly_stats=weekly_stats,
+                         recent_clients=recent_clients)
 
 @app.route('/init-db')
 def init_db():
